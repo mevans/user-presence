@@ -1,4 +1,3 @@
-version: '3'
 services:
   node-app:
     build:
@@ -21,8 +20,8 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-      - ./redis.conf:/usr/local/etc/redis/redis.conf  # Mount the redis.conf file from the project root
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]  # Use the mounted config
+      - ./redis.conf:/usr/local/etc/redis/redis.conf # Mount the redis.conf file
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"] # Run Redis with the custom config
     restart: always
 
 volumes:

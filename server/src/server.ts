@@ -1,9 +1,11 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import { UserPresenceState, WatchUserMessage } from "./types";
+import { WatchUserMessage } from "./types";
 import env from "./env";
 import { UserPresenceTracker } from "./user-presence-tracker";
+import { pubSubClient, redisClient } from "./redis-client";
+import { message } from "./message";
 
 const app = express();
 const server = http.createServer(app);
@@ -15,7 +17,9 @@ const io = new Server(server, {
 
 app.use(express.json());
 
-const presenceTracker = new UserPresenceTracker();
+const presenceTracker = new UserPresenceTracker((state) =>
+  io.to(state.userId).emit(message.statusUpdate, state),
+);
 
 io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId as string;
@@ -24,57 +28,40 @@ io.on("connection", async (socket) => {
     throw new Error("User ID is required");
   }
 
-  console.log(`User connected: ${userId}`);
-
   presenceTracker.setOnline(userId);
 
-  io.to(userId).emit("status-update", onlineStateOf(userId));
-
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${userId}`);
-
     presenceTracker.setOffline(userId);
-    io.to(userId).emit("status-update", offlineStateOf(userId));
   });
 
-  socket.on("start-watching", async (data: WatchUserMessage) => {
-    const { userId: targetUserId } = data;
+  socket.on(message.startWatching, async (data: WatchUserMessage) => {
+    socket.join(data.userId);
 
-    console.log(`User ${userId} is watching user ${targetUserId}`);
-
-    socket.join(targetUserId);
-
-    const currentStatus = await presenceTracker.getStatus(targetUserId);
-
-    socket.emit("status-update", {
-      userId: targetUserId,
-      status: currentStatus,
-    });
+    const currentStatus = await presenceTracker.getStatus(data.userId);
+    socket.emit(message.statusUpdate, currentStatus);
   });
 
-  socket.on("stop-watching", (data: WatchUserMessage) => {
-    const { userId: targetUserId } = data;
+  socket.on(message.stopWatching, (data: WatchUserMessage) => {
+    socket.leave(data.userId);
+  });
 
-    console.log(`User ${userId} stopped watching user ${targetUserId}`);
-
-    socket.leave(targetUserId);
+  socket.conn.on("packet", (packet) => {
+    if (packet.type === "pong") {
+      // Refresh the user's online status
+      presenceTracker.setOnline(userId);
+    }
   });
 });
 
-server.listen(env.PORT, () => {
-  console.log(`Server listening on port ${env.PORT}`);
-});
+(async () => {
+  try {
+    await redisClient.connect();
+    await pubSubClient.connect();
+  } catch (err) {
+    console.error("Failed to connect to Redis:", err);
+  }
 
-function offlineStateOf(userId: string): UserPresenceState {
-  return {
-    userId,
-    status: "offline",
-  };
-}
-
-function onlineStateOf(userId: string): UserPresenceState {
-  return {
-    userId,
-    status: "online",
-  };
-}
+  server.listen(env.PORT, () => {
+    console.log(`Server listening on port ${env.PORT}`);
+  });
+})();
