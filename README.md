@@ -1,5 +1,8 @@
 # User presence tracking
 
+https://github.com/user-attachments/assets/c21c353e-5b60-407f-bf98-07e678d80e9d
+
+
 ## Server
  - Node JS express server
  - Redis for persistable, queryable key value store to track online users
