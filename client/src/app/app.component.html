@@ -1,0 +1,13 @@
+<input placeholder="Your user id" [formControl]="loggedInUserId" />
+<button (click)="connect()">Join</button>
+<button (click)="disconnect()">Disconnect</button>
+
+<input placeholder="User id to watch" [formControl]="userIdToWatch" />
+<button (click)="startWatching()">Start Watching</button>
+
+@for (user of watching(); track user) {
+  <div>
+    <app-online-indicator [userId]="user"></app-online-indicator>
+    <button (click)="stopWatching(user)">Stop Watching</button>
+  </div>
+}

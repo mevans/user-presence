@@ -1,0 +1,8 @@
+# ignore angular specific files inside the 'client' folder
+
+/client/.angular
+/client/package-lock.json
+/client/node_modules/
+
+/server/node_modules/
+/server/package-lock.json

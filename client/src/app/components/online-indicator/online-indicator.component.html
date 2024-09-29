@@ -1,0 +1,6 @@
+<div
+  (appIsVisible)="onIsVisibleChange($event)"
+  [ngStyle]="{ color: status()?.status === 'online' ? 'green' : 'red' }"
+>
+  Status of {{ userId() }}: {{ status()?.status }}
+</div>
