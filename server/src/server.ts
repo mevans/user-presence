@@ -17,9 +17,9 @@ const io = new Server(server, {
 
 app.use(express.json());
 
-const presenceTracker = new UserPresenceTracker((state) =>
-  io.to(state.userId).emit(message.statusUpdate, state),
-);
+const presenceTracker = new UserPresenceTracker((state) => {
+  io.to(state.userId).emit(message.statusUpdate, state);
+});
 
 io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId as string;

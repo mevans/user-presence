@@ -1,19 +1,18 @@
-import { inject, Injectable } from '@angular/core';
-import { Socket } from 'ngx-socket-io';
-import { PresenceStatus } from '../../types/presence-status.type';
-import { UserPresenceState } from '../../types/user-presence-state.type';
-import { filter, Observable, startWith } from 'rxjs';
+import { inject, Injectable } from "@angular/core";
+import { Socket } from "ngx-socket-io";
+import { UserPresenceState } from "../../types/user-presence-state.type";
+import { filter, Observable, startWith } from "rxjs";
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: "root",
 })
 export class UserPresenceService {
   socket = inject(Socket);
-  statusEvents$ = this.socket.fromEvent<UserPresenceState>('status-update');
+  statusEvents$ = this.socket.fromEvent<UserPresenceState>("status-update");
 
   statusEventsOf(userId: string): Observable<UserPresenceState> {
     return this.statusEvents$.pipe(
-      startWith({ userId, status: 'offline' as const }),
+      startWith({ userId, status: "offline" as const }),
       filter((update) => update.userId === userId),
     );
   }
@@ -24,11 +23,11 @@ export class UserPresenceService {
   }
 
   startWatching(userId: string): void {
-    this.socket.emit('start-watching', { userId });
+    this.socket.emit("start-watching", { userId });
   }
 
   stopWatching(userId: string): void {
-    this.socket.emit('stop-watching', { userId });
+    this.socket.emit("stop-watching", { userId });
   }
 
   disconnect(): void {
